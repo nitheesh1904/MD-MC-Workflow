@@ -1,0 +1,147 @@
+LAMMPS (27 Jun 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+# indicates a comment line
+# Find minimum energy fcc configuration
+
+####################### Initialize Simulation ######################
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+read_data data_50.txt
+Reading data file ...
+  orthogonal box = (0 0 0) to (30.46216 26.381005 223.85025)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  15552 atoms
+  read_data CPU = 0.041 seconds
+
+###################### Define Interatomic Potential ######################
+
+pair_style eam/alloy
+pair_coeff * * /home/labuser/snap/snapd-desktop-integration/current/potential_files/FeNiCr_Bonny_2013_ptDef.eam.alloy.setfl Ni Fe
+neighbor 2.0 bin
+reset_timestep 0
+
+####################### calculated properties SETTINGS ######################
+
+#Define computation of quantities defined on a group of atoms
+compute eng all pe/atom 	# a variable named 'eng' is defined to store the potential energy for each atom
+compute eatoms all reduce sum c_eng  #a variable named 'eatoms' is defined to store the sum of all 'eng' values
+				#c_eng access the eng defined in the first compute command
+
+####################### thermal properties output on screen ######################
+
+fix 1 all box/relax iso	0.0 vmax 0.001
+thermo 10		        #'thermo' specifies the output during minimization at every 10 steps
+thermo_style custom step pe lx ly lz press pxx pyy pzz c_eatoms   #'thermo_style' specifies what type of output is shown to screen eg: pe : potential energy;lx,ly,lz : simulation cell dimensions; press : pressure etc..
+
+
+# Use cfg for visuvalization
+
+dump 1 all custom 10 dump.dat mass type xs ys zs
+
+min_style cg
+minimize 1e-10 1e-10 5000 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7.18
+  ghost atom cutoff = 7.18
+  binsize = 3.59, bins = 9 8 63
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair eam/alloy, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+WARNING: Dump 1 includes no atom IDs and is not sorted by ID. This may complicate post-processing tasks or visualization (src/dump.cpp:219)
+WARNING: Energy due to 1 extra global DOFs will be included in minimizer energies
+ (src/min.cpp:219)
+Per MPI rank memory allocation (min/avg/max) = 17.13 | 17.13 | 17.13 Mbytes
+   Step         PotEng           Lx             Ly             Lz           Press           Pxx            Pyy            Pzz          c_eatoms   
+         0  -68565.038      30.46216       26.381005      223.85025     -119597.02     -119203.15     -119576.84     -120011.06     -68565.038    
+        10  -68868.83       30.157539      26.117194      221.61174     -59687.348     -59381.269     -59672.976     -60007.8       -68868.83     
+        20  -68989.559      29.93792       25.926999      219.99788     -1884.1988     -1685.4494     -1848.2413     -2118.9057     -68989.559    
+        30  -69037.222      29.967873      25.952939      220.21799      9.3318043      236.4223       71.333116     -279.76        -69037.222    
+        40  -69045.048      29.997446      25.978551      220.43531     -5069.4411     -4842.1437     -5003.673      -5362.5065     -69045.048    
+        50  -69047.836      29.991343      25.973265      220.39046     -2103.279      -1875.7292     -2050.9316     -2383.1762     -69047.836    
+        60  -69048.524      29.984548      25.96738       220.34053      171.03951      393.43271      219.42867     -99.742851     -69048.524    
+        63  -69048.655      29.985549      25.968247      220.34788      4.1923819      229.20581      46.967229     -263.5959      -69048.655    
+Loop time of 3.641 on 1 procs for 63 steps with 15552 atoms
+
+99.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -68565.0377952307  -69048.6551924716  -69048.6551969743
+  Force two-norm initial, final = 40284.819 2.6172713
+  Force max component initial, final = 40284.766 1.3683082
+  Final line search alpha, max atom move = 0.0002834517 0.0003878493
+  Iterations, force evaluations = 63 103
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 3.3578     | 3.3578     | 3.3578     |   0.0 | 92.22
+Neigh   | 0.094098   | 0.094098   | 0.094098   |   0.0 |  2.58
+Comm    | 0.01051    | 0.01051    | 0.01051    |   0.0 |  0.29
+Output  | 0.095122   | 0.095122   | 0.095122   |   0.0 |  2.61
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.08348    |            |       |  2.29
+
+Nlocal:          15552 ave       15552 max       15552 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          21375 ave       21375 max       21375 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    1.08864e+06 ave 1.08864e+06 max 1.08864e+06 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1088640
+Ave neighs/atom = 70
+Neighbor list builds = 3
+Dangerous builds = 0
+variable teng equal "c_eatoms"
+variable natoms equal "count(all)"
+variable ecoh equal "v_teng/v_natoms"
+variable lengthx equal "lx/6"
+variable lengthy equal "ly/3"
+variable lengthz equal "lz/36"
+variable dim equal "lx"
+print "cohesive energy ${ecoh}"
+cohesive energy -4.43985694424995
+print "x_length equals ${lengthx}"
+x_length equals 4.9975914630542
+print "y_length equals ${lengthy}"
+y_length equals 8.65608232948236
+print "z_length equals ${lengthz}"
+z_length equals 6.12077451368603
+
+variable lp equal ${lengthx}/sqrt(2)
+variable lp equal 4.9975914630542/sqrt(2)
+print "lattice parameter equals ${lp}"
+lattice parameter equals 3.53383081312562
+Total wall time: 0:00:03

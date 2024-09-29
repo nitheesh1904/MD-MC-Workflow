@@ -1,0 +1,7 @@
+Potential File,Element,Dimensions,Lattice Parameter (in Å), Cohesive Energy
+FeCuNi-with-ZBL.eam.alloy.setfl,Fe,10,3.65836447281648,-4.00204459324558
+FeNiCrCoCu-heamix.eam.alloy.setfl,Fe,10,3.56000024242788,-4.39999992975928
+FeNiCrCoCu-with-ZBL.eam.alloy.setfl,Fe,10,3.56000028017957,-4.39999993039228
+FeNiCrCoTi-heamix.setfl.setfl,Fe,10,3.56000026773903,-4.39999993255705
+FeNiCr_Bonny_2013_ptDef.eam.alloy.setfl,Fe,10,3.56200761306354,-4.39964722292965
+FeNiCr_Foster_Sills.setfl,Fe,10,3.63301681796461,-4.28023665890777

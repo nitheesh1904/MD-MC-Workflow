@@ -1,0 +1,58 @@
+# indicates a comment line
+# Find minimum energy fcc configuration
+
+####################### Initialize Simulation ######################
+
+units metal  	
+dimension 3 	
+boundary p p p 	
+atom_style atomic 	
+
+variable    a equal 3.5
+
+variable side_dimension equal 10
+###################### variable setting ######################################## 
+           # define the variable k and k will (Incremental ) change upto 20
+
+###################### fcc simulation cell setting ##########################  
+
+lattice        fcc $a orient x 1 0 0 orient y 0 1 0 orient z 0 0 1 #specifies what type of lattice is used (fcc, bcc, hcp, etc.) and the number following this specifies the lattice constant
+	
+region simbox block 0 ${side_dimension} 0 ${side_dimension} 0 ${side_dimension} units lattice 
+create_box    1 simbox		
+create_atoms 1 region simbox		
+ 
+###################### Define Interatomic Potential ######################
+
+pair_style eam/alloy  		
+pair_coeff * * /home/labuser/snap/snapd-desktop-integration/current/potential_files/FeNiCr_Foster_Sills.setfl Ni 
+neighbor 2.0 bin 		
+reset_timestep 0
+
+####################### calculated properties SETTINGS ######################
+
+#Define computation of quantities defined on a group of atoms
+compute eng all pe/atom 	# a variable named 'eng' is defined to store the potential energy for each atom
+compute eatoms all reduce sum c_eng  #a variable named 'eatoms' is defined to store the sum of all 'eng' values
+				#c_eng access the eng defined in the first compute command
+
+####################### thermal properties output on screen ###################### 
+
+fix 1 all box/relax iso	0.0 vmax 0.001
+thermo 10		        #'thermo' specifies the output during minimization at every 10 steps
+thermo_style custom step pe lx ly lz press pxx pyy pzz c_eatoms   #'thermo_style' specifies what type of output is shown to screen eg: pe : potential energy;lx,ly,lz : simulation cell dimensions; press : pressure etc..
+
+
+# Use cfg for visuvalization
+	
+dump 1 all custom 10 dump.dat mass type xs ys zs
+ 
+min_style cg
+minimize 1e-10 1e-10 5000 10000  
+variable teng equal "c_eatoms"
+variable natoms equal "count(all)"
+variable ecoh equal "v_teng/v_natoms"
+variable length equal "lx/10"
+variable dim equal "lx"
+print "cohesive energy ${ecoh}"
+print "lp equals ${length}"

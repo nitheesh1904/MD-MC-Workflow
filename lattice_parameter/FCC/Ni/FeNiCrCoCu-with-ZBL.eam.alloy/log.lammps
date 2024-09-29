@@ -1,0 +1,127 @@
+LAMMPS (27 Jun 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+# indicates a comment line
+# Find minimum energy fcc configuration
+
+####################### Initialize Simulation ######################
+
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+
+variable    a equal 3.5
+
+variable side_dimension equal 10
+###################### variable setting ########################################
+           # define the variable k and k will (Incremental ) change upto 20
+
+###################### fcc simulation cell setting ##########################
+
+lattice        fcc $a orient x 1 0 0 orient y 0 1 0 orient z 0 0 1 #specifies what type of lattice is used (fcc, bcc, hcp, etc.) and the number following this specifies the lattice constant
+lattice        fcc 3.5 orient x 1 0 0 orient y 0 1 0 orient z 0 0 1 
+Lattice spacing in x,y,z = 3.5 3.5 3.5
+
+region simbox block 0 ${side_dimension} 0 ${side_dimension} 0 ${side_dimension} units lattice
+region simbox block 0 10 0 ${side_dimension} 0 ${side_dimension} units lattice
+region simbox block 0 10 0 10 0 ${side_dimension} units lattice
+region simbox block 0 10 0 10 0 10 units lattice
+create_box    1 simbox
+Created orthogonal box = (0 0 0) to (35 35 35)
+  1 by 1 by 1 MPI processor grid
+create_atoms 1 region simbox
+Created 4000 atoms
+  using lattice units in orthogonal box = (0 0 0) to (35 35 35)
+  create_atoms CPU = 0.001 seconds
+
+###################### Define Interatomic Potential ######################
+
+pair_style eam/alloy
+pair_coeff * * /home/labuser/snap/snapd-desktop-integration/current/potential_files/FeNiCrCoCu-with-ZBL.eam.alloy.setfl Ni
+neighbor 2.0 bin
+reset_timestep 0
+
+####################### calculated properties SETTINGS ######################
+
+#Define computation of quantities defined on a group of atoms
+compute eng all pe/atom 	# a variable named 'eng' is defined to store the potential energy for each atom
+compute eatoms all reduce sum c_eng  #a variable named 'eatoms' is defined to store the sum of all 'eng' values
+				#c_eng access the eng defined in the first compute command
+
+####################### thermal properties output on screen ######################
+
+fix 1 all box/relax iso	0.0 vmax 0.001
+thermo 10		        #'thermo' specifies the output during minimization at every 10 steps
+thermo_style custom step pe lx ly lz press pxx pyy pzz c_eatoms   #'thermo_style' specifies what type of output is shown to screen eg: pe : potential energy;lx,ly,lz : simulation cell dimensions; press : pressure etc..
+
+
+# Use cfg for visuvalization
+
+dump 1 all custom 10 dump.dat mass type xs ys zs
+
+min_style cg
+minimize 1e-10 1e-10 5000 10000
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7.80375
+  ghost atom cutoff = 7.80375
+  binsize = 3.901875, bins = 9 9 9
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair eam/alloy, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+WARNING: Dump 1 includes no atom IDs and is not sorted by ID. This may complicate post-processing tasks or visualization (src/dump.cpp:219)
+WARNING: Energy due to 1 extra global DOFs will be included in minimizer energies
+ (src/min.cpp:219)
+Per MPI rank memory allocation (min/avg/max) = 6.091 | 6.091 | 6.091 Mbytes
+   Step         PotEng           Lx             Ly             Lz           Press           Pxx            Pyy            Pzz          c_eatoms   
+         0  -17792.728      35             35             35             31980.289      31980.289      31980.289      31980.289     -17792.728    
+         7  -17800          35.200008      35.200008      35.200008      0.0023390958   0.0023390958   0.0023390957   0.0023390958  -17800        
+Loop time of 0.11986 on 1 procs for 7 steps with 4000 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -17792.7278154097  -17800.0000617877  -17800.0000618357
+  Force two-norm initial, final = 2567.4229 0.00018993826
+  Force max component initial, final = 2567.4229 0.00018993826
+  Final line search alpha, max atom move = 0.021925839 4.1645557e-06
+  Iterations, force evaluations = 7 9
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.11355    | 0.11355    | 0.11355    |   0.0 | 94.74
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00030012 | 0.00030012 | 0.00030012 |   0.0 |  0.25
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.006008   |            |       |  5.01
+
+Nlocal:           4000 ave        4000 max        4000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           8195 ave        8195 max        8195 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         352000 ave      352000 max      352000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 352000
+Ave neighs/atom = 88
+Neighbor list builds = 0
+Dangerous builds = 0
+variable teng equal "c_eatoms"
+variable natoms equal "count(all)"
+variable ecoh equal "v_teng/v_natoms"
+variable length equal "lx/10"
+variable dim equal "lx"
+print "cohesive energy ${ecoh}"
+cohesive energy -4.45000001545452
+print "lp equals ${length}"
+lp equals 3.52000076150735
+Total wall time: 0:00:00
